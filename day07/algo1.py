@@ -1,19 +1,27 @@
-
 class Directory:
   def __init__(self, name, parent=None):
     self.name = name
     self.contents = {}
     self.parent = parent
+    self.size = 0
   
-  def goTo(self, dest):
+  def get(self, dest):
     if dest == "/":
       return self
     if dest == "..":
       return self.parent
     return self.contents[dest]
-  
+
+  def add(self, src):
+    self.contents[src.name] = src
+    return self
+
   def __str__(self):
-    return f"dir: {self.name}, parent: {self.parent}, contents: {self.contents}"
+    if not self.parent:
+      parent = "None"
+    else:
+      parent = self.parent.name
+    return f"dir: {self.name}, parent: {parent}, contents: {self.contents}"
   
 class File:
   def __init__(self, name, size):
@@ -29,7 +37,7 @@ workingDirectory = root
 
 def runCommand(words, workingDirectory):
   if words[0] == "cd":
-    workingDirectory = workingDirectory.goTo(words[1])
+    workingDirectory = workingDirectory.get(words[1])
   return workingDirectory
 
 def getNextLine(rawFile, workingDirectory):
@@ -38,11 +46,14 @@ def getNextLine(rawFile, workingDirectory):
     return 0
   words = line.split()
   if words[0] == '$':
-    return runCommand(workingDirectory)
+    return runCommand(words[1:],workingDirectory)
   if words[0] == 'dir':
-    return Directory(words[1], workingDirectory)
-  return File(words[1], words[0])
+    return workingDirectory.add(Directory(words[1], workingDirectory))
+  return workingDirectory.add(File(words[1], words[0]))
 
 print(workingDirectory)
-getNextLine(rawFile, workingDirectory)
-print(workingDirectory)
+while True:
+   workingDirectory = getNextLine(rawFile, workingDirectory)
+   if not workingDirectory:
+     break
+print(root.get('a'))
