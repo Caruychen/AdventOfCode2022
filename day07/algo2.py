@@ -41,9 +41,6 @@ class File:
   def __str__(self):
     return f"file: {self.name}, size: {self.size}"
 
-rawFile = open("input.txt", "r")
-root = Directory('/')
-workingDirectory = root
 
 def runCommand(words, workingDirectory):
   if words[0] == "cd":
@@ -61,19 +58,28 @@ def getNextLine(rawFile, workingDirectory):
     return workingDirectory.add(Directory(words[1], workingDirectory))
   return workingDirectory.add(File(words[1], words[0]))
 
-def traverseTree(directory):
-  sum = 0
-  for key, value in directory.contents.items():
-      if value.type == 'directory':
-        sum += traverseTree(value)
-  sum += directory.size if directory.size <= 100000 else 0
-  return sum
+def constructTree(directory):
+  while True:
+    directory = getNextLine(rawFile, directory)
+    if not directory:
+      break
 
-print(workingDirectory)
-while True:
-   workingDirectory = getNextLine(rawFile, workingDirectory)
-   if not workingDirectory:
-     break
-print(root)
+def traverseTree(directory, toFree):
+  optimal = directory.size
+  queue = [directory]
+  for element in queue:
+    queue += [value for value in element.contents.values() if value.type == 'directory']
+    if element.size >= toFree and element.size < optimal:
+      optimal = element.size
+  return optimal
 
-print(traverseTree(root))
+rawFile = open("input.txt", "r")
+
+capacity = 70000000
+required = 30000000
+
+root = Directory('/')
+constructTree(root)
+unused = capacity - root.size
+toFree = required - unused
+print(traverseTree(root, toFree))
